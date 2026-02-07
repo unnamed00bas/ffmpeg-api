@@ -1,0 +1,72 @@
+{
+  "dashboard": {
+    "title": "FFmpeg API: Error Rates",
+    "tags": ["ffmpeg", "errors", "http"],
+    "timezone": "UTC",
+    "schemaVersion": 36,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Error Rate by Endpoint",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status_code=~'5..'}[5m])) by (endpoint)",
+            "legendFormat": "{{endpoint}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "HTTP Error Rate by Status Code",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status_code=~'5..'}[5m])) by (status_code)",
+            "legendFormat": "{{status_code}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Celery Task Failure Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(ffmpeg_tasks_total{status='failed'}[5m])) / (sum(rate(ffmpeg_tasks_total[5m]))) * 100",
+            "legendFormat": "task failures %"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 4,
+        "title": "Database Query Errors",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(pg_stat_database_db_error[5m]))",
+            "legendFormat": "errors/sec"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "id": 5,
+        "title": "MinIO Operation Errors",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(minio_disk_storage_errors[5m]))",
+            "legendFormat": "errors/sec"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DEPLOY_PATH: /opt/ffmpeg-api
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Create .env file on server
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.PRODUCTION_HOST }} << 'ENVSSH'
+        cat > ${{ env.DEPLOY_PATH }}/.env << 'EOF'
+        # Database
+        POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+        POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+        
+        # Redis
+        REDIS_URL=redis://redis:6379/0
+        
+        # MinIO
+        MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}
+        MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}
+        MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}
+        
+        # JWT
+        JWT_SECRET=${{ secrets.JWT_SECRET }}
+        
+        # Grafana
+        GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        
+        # App Config
+        ENVIRONMENT=production
+        LOG_LEVEL=INFO
+        DEBUG=False
+        CORS_ORIGINS='["*"]'
+        EOF
+        ENVSSH
+    
+    - name: Deploy
+      run: |
+        ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
+          cd ${{ env.DEPLOY_PATH }}
+          git fetch origin main
+          git reset --hard origin/main
+          docker compose up -d --build
+          docker compose exec -T api alembic upgrade head || true
+          docker image prune -f
+        EOF
+    
+    - name: Health check
+      run: |
+        sleep 30
+        ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.PRODUCTION_HOST }} \
+          "curl -f http://localhost:8000/api/v1/health || exit 1"
+    
+    - name: Cleanup SSH key
+      if: always()
+      run: rm -f ~/.ssh/deploy_key

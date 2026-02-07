@@ -1,0 +1,77 @@
+# Prometheus alerts для FFmpeg API
+# Подключение: в prometheus.yml указать rule_files: - "alerts.yml" (путь относительно config)
+groups:
+  - name: ffmpeg_api_alerts
+    interval: 30s
+    rules:
+      # Высокий процент ошибок HTTP 5xx
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for last 5 minutes"
+
+      # Высокая задержка (p95 > 1s)
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is above 1s for last 5 minutes"
+
+      # Большая очередь (по нашей метрике queue_size)
+      - alert: HighQueueSize
+        expr: |
+          sum(queue_size) > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High queue size"
+          description: "Queue size is above 100 tasks"
+
+      # Высокое использование CPU (если экспортируется приложением)
+      - alert: HighCPUUsage
+        expr: |
+          cpu_usage_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80%"
+
+      # Высокое использование памяти
+      - alert: HighMemoryUsage
+        expr: |
+          (memory_usage_bytes / (1024 * 1024 * 1024)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 85%"
+
+      # Мало свободного места на диске (требует node_exporter)
+      - alert: LowDiskSpace
+        expr: |
+          (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is above 90%"

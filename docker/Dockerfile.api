@@ -1,0 +1,118 @@
+################################################################################
+# Multi-stage Dockerfile for FFmpeg API
+# Supports both development and production builds
+################################################################################
+
+# =============================================================================
+# Stage 1: Base - System dependencies
+# =============================================================================
+FROM python:3.11-slim AS base
+
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка FFmpeg
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание рабочей директории
+WORKDIR /app
+
+# Установка Python зависимостей (базовые)
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Переменные окружения
+ENV PYTHONPATH=/app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# =============================================================================
+# Stage 2: Development
+# =============================================================================
+FROM base AS development
+
+# Установка dev зависимостей
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Копирование приложения с поддержкой hot-reload
+COPY app/ ./app/
+
+# Создание директорий для загрузок и временных файлов
+RUN mkdir -p /app/uploads /app/temp
+
+# Использование root для разработки (для hot-reload)
+# Переключение на пользователя для безопасности
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Экспорт порта
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Запуск с hot-reload для разработки
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# =============================================================================
+# Stage 3: Production
+# =============================================================================
+FROM base AS production
+
+# Копирование приложения
+COPY app/ ./app/
+
+# Копирование Alembic для миграций
+COPY alembic.ini ./
+COPY alembic/ ./alembic/
+
+# Создание директорий для загрузок и временных файлов
+RUN mkdir -p /app/uploads /app/temp /app/exports
+
+# Установка только production зависимостей и оптимизация
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir gunicorn[gevent]
+
+# Создание пользователя для безопасности
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+# Переключение на пользователя
+USER appuser
+
+# Переменные окружения для production
+ENV PYTHONPATH=/app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV ENVIRONMENT=production
+
+# Экспорт порта
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Запуск с Gunicorn для production (multi-worker)
+CMD ["gunicorn", "app.main:app", \
+     "--workers", "2", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--bind", "0.0.0.0:8000", \
+     "--timeout", "300", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info"]
+

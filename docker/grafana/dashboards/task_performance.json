@@ -1,0 +1,80 @@
+{
+  "dashboard": {
+    "title": "FFmpeg API: Task Performance",
+    "tags": ["ffmpeg", "tasks", "performance"],
+    "timezone": "UTC",
+    "schemaVersion": 36,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Tasks by Type",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (type) (ffmpeg_tasks_total)",
+            "legendFormat": "{{type}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "Task Duration (Average & P95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "avg(ffmpeg_task_duration_seconds) by (type)",
+            "legendFormat": "avg {{type}}"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(ffmpeg_task_duration_seconds_bucket[5m])) by (le, type))",
+            "legendFormat": "p95 {{type}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 8, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Task Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(ffmpeg_tasks_total{status='completed'}[5m])) / (sum(rate(ffmpeg_tasks_total[5m]))) * 100",
+            "legendFormat": "{{value}}%"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 }
+      },
+      {
+        "id": 4,
+        "title": "Task Failure Rate by Type",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(ffmpeg_tasks_total{status='failed'}[5m])) by (type)",
+            "legendFormat": "{{type}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 6, "y": 8 }
+      },
+      {
+        "id": 5,
+        "title": "Active Tasks by Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(queue_size{status='processing'})",
+            "legendFormat": "processing"
+          },
+          {
+            "expr": "sum(queue_size{status='pending'})",
+            "legendFormat": "pending"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 12 }
+      }
+    ]
+  }
+}

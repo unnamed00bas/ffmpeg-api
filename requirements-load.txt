@@ -1,0 +1,10 @@
+# Load Testing Dependencies
+locust>=2.23.0
+gevent>=23.0.0
+
+# Optional dependencies for better performance and monitoring
+psutil>=5.9.0
+pycurl>=7.45.0
+
+# For generating real test files (optional)
+ffmpeg-python>=0.2.0

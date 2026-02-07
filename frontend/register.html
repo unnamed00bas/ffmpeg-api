@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация — FFmpeg API</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/auth.css">
+</head>
+
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🎬</span>
+                    <span class="logo-text">FFmpeg API</span>
+                </a>
+                <h1>Создать аккаунт</h1>
+                <p>Начните бесплатно</p>
+            </div>
+
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Имя пользователя</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="myusername"
+                        required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_\-]+" autocomplete="username">
+                    <span class="form-hint">Латинские буквы, цифры, _ и -</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="user@example.com"
+                        required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Пароль</label>
+                    <div class="password-input">
+                        <input type="password" id="password" name="password" class="form-input"
+                            placeholder="Минимум 8 символов" required minlength="8" autocomplete="new-password">
+                        <button type="button" class="password-toggle" aria-label="Показать пароль">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="password-strength">
+                        <div class="strength-bar">
+                            <div class="strength-fill"></div>
+                        </div>
+                        <span class="strength-text">Введите пароль</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Подтвердите пароль</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                        placeholder="Повторите пароль" required autocomplete="new-password">
+                </div>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="terms" required>
+                    <span>Я согласен с <a href="#">условиями использования</a></span>
+                </label>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    <span class="btn-text">Создать аккаунт</span>
+                    <span class="btn-loader" style="display: none;">
+                        <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                                stroke-dasharray="30 70" />
+                        </svg>
+                    </span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Уже есть аккаунт? <a href="/login.html">Войти</a></p>
+            </div>
+        </div>
+
+        <div class="auth-bg">
+            <div class="auth-bg-pattern"></div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script>
+        // Password strength checker
+        const passwordInput = document.getElementById('password');
+        const strengthFill = document.querySelector('.strength-fill');
+        const strengthText = document.querySelector('.strength-text');
+
+        passwordInput.addEventListener('input', function () {
+            const password = this.value;
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            const percentage = (strength / 5) * 100;
+            strengthFill.style.width = percentage + '%';
+
+            if (strength <= 1) {
+                strengthFill.className = 'strength-fill weak';
+                strengthText.textContent = 'Слабый';
+            } else if (strength <= 2) {
+                strengthFill.className = 'strength-fill fair';
+                strengthText.textContent = 'Средний';
+            } else if (strength <= 3) {
+                strengthFill.className = 'strength-fill good';
+                strengthText.textContent = 'Хороший';
+            } else {
+                strengthFill.className = 'strength-fill strong';
+                strengthText.textContent = 'Надёжный';
+            }
+
+            if (!password) {
+                strengthText.textContent = 'Введите пароль';
+                strengthFill.style.width = '0%';
+            }
+        });
+
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const form = e.target;
+            const username = form.username.value;
+            const email = form.email.value;
+            const password = form.password.value;
+            const confirmPassword = form.confirmPassword.value;
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const btnLoader = submitBtn.querySelector('.btn-loader');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Пароли не совпадают';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            // Show loading
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'block';
+            submitBtn.disabled = true;
+            errorMessage.style.display = 'none';
+
+            try {
+                await Auth.register(username, email, password);
+
+                // Auto-login after registration
+                await Auth.login(email, password);
+
+                // Redirect to dashboard
+                window.location.href = '/dashboard.html';
+            } catch (error) {
+                errorMessage.textContent = error.message || 'Ошибка регистрации';
+                errorMessage.style.display = 'block';
+            } finally {
+                btnText.style.display = 'block';
+                btnLoader.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Password toggle
+        document.querySelector('.password-toggle').addEventListener('click', function () {
+            const input = document.getElementById('password');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    </script>
+</body>
+
+</html>

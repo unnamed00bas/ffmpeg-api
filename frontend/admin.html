@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель — FFmpeg API</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/dashboard.css">
+    <link rel="stylesheet" href="/styles/admin.css">
+</head>
+
+<body class="dashboard-page admin-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="logo">
+                <span class="logo-icon">🎬</span>
+                <span class="logo-text">FFmpeg API</span>
+            </a>
+            <span class="admin-badge">Admin</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="overview">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                <span>Обзор</span>
+            </a>
+            <a href="#" class="nav-item" data-page="users">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Пользователи</span>
+            </a>
+            <a href="#" class="nav-item" data-page="tasks">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                <span>Все задачи</span>
+            </a>
+            <a href="#" class="nav-item" data-page="queue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+                <span>Очередь</span>
+            </a>
+            <a href="#" class="nav-item" data-page="system">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+                <span>Система</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="/dashboard.html" class="btn btn-ghost btn-block">Личный кабинет</a>
+            <button id="logoutBtn" class="btn btn-ghost btn-block">Выйти</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="sidebar-toggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+                <h1 id="pageTitle">Обзор системы</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-menu">
+                    <span class="admin-label">Администратор</span>
+                    <span id="userName">Загрузка...</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-content">
+            <!-- Overview Page -->
+            <section id="page-overview" class="page active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info"><span class="stat-value" id="totalUsers">0</span><span
+                                class="stat-label">Пользователей</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info"><span class="stat-value" id="totalTasks">0</span><span
+                                class="stat-label">Всего задач</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info"><span class="stat-value" id="pendingTasks">0</span><span
+                                class="stat-label">В очереди</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💾</div>
+                        <div class="stat-info"><span class="stat-value" id="storageUsed">0 GB</span><span
+                                class="stat-label">Хранилище</span></div>
+                    </div>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2>Последние пользователи</h2>
+                        </div>
+                        <div id="recentUsers" class="users-list">
+                            <div class="loading">Загрузка...</div>
+                        </div>
+                    </div>
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2>Активные задачи</h2>
+                        </div>
+                        <div id="activeTasks" class="tasks-list">
+                            <div class="loading">Загрузка...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Page -->
+            <section id="page-users" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Управление пользователями</h2>
+                        <button id="createUserBtn" class="btn btn-primary">+ Новый пользователь</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Имя</th>
+                                    <th>Email</th>
+                                    <th>Статус</th>
+                                    <th>Роль</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">Загрузка...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="usersPagination"></div>
+                </div>
+            </section>
+
+            <!-- Tasks Page -->
+            <section id="page-tasks" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Все задачи</h2>
+                        <select id="taskStatusFilter" class="form-input">
+                            <option value="">Все статусы</option>
+                            <option value="pending">Ожидает</option>
+                            <option value="processing">В обработке</option>
+                            <option value="completed">Выполнено</option>
+                            <option value="failed">Ошибка</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Тип</th>
+                                    <th>Пользователь</th>
+                                    <th>Статус</th>
+                                    <th>Создано</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasksTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">Загрузка...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Queue Page -->
+            <section id="page-queue" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Очередь Celery</h2>
+                        <button id="refreshQueueBtn" class="btn btn-outline">🔄 Обновить</button>
+                    </div>
+                    <div id="queueInfo" class="queue-info">
+                        <div class="loading">Загрузка...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Page -->
+            <section id="page-system" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Системные метрики</h2>
+                    </div>
+                    <div id="systemMetrics" class="system-metrics">
+                        <div class="loading">Загрузка...</div>
+                    </div>
+                </div>
+                <div class="content-card" style="margin-top: var(--space-lg);">
+                    <div class="card-header">
+                        <h2>Операции</h2>
+                    </div>
+                    <div class="admin-actions">
+                        <button id="cleanupBtn" class="btn btn-outline">🗑️ Очистка файлов</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Создать пользователя</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="createUserForm" class="modal-body">
+                <div class="form-group"><label class="form-label">Имя пользователя</label>
+                    <input type="text" name="username" class="form-input" required>
+                </div>
+                <div class="form-group"><label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-input" required>
+                </div>
+                <div class="form-group"><label class="form-label">Пароль</label>
+                    <input type="password" name="password" class="form-input" required minlength="8">
+                </div>
+                <label class="checkbox-label"><input type="checkbox" name="is_admin"><span>Администратор</span></label>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost modal-cancel">Отмена</button>
+                <button type="submit" form="createUserForm" class="btn btn-primary">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/admin.js"></script>
+</body>
+
+</html>

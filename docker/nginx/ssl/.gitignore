@@ -1,0 +1,27 @@
+# SSL certificates - never commit real certificates to git
+*.pem
+*.crt
+*.key
+*.csr
+*.der
+*.p12
+*.pfx
+
+# Let's Encrypt directories
+live/
+archive/
+renewal/
+accounts/
+
+# Certificate authorities
+ca.crt
+ca.key
+ca.srl
+
+# Temporary files
+*.tmp
+*.old
+*.bak
+
+# OpenSSL config (can contain sensitive info)
+openssl.cnf

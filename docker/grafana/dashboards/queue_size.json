@@ -1,0 +1,84 @@
+{
+  "dashboard": {
+    "title": "FFmpeg API: Queue Status",
+    "tags": ["ffmpeg", "celery", "queue"],
+    "timezone": "UTC",
+    "schemaVersion": 36,
+    "version": 0,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Queue Size by Status",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "queue_size{status='pending'}",
+            "legendFormat": "pending"
+          },
+          {
+            "expr": "queue_size{status='processing'}",
+            "legendFormat": "processing"
+          },
+          {
+            "expr": "queue_size{status='reserved'}",
+            "legendFormat": "reserved"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "Queue Size by Type (optional)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(queue_size)",
+            "legendFormat": "total"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Tasks Processed per Minute",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(ffmpeg_tasks_total{status='completed'}[1m]))",
+            "legendFormat": "completed/min"
+          },
+          {
+            "expr": "sum(rate(ffmpeg_tasks_total{status='failed'}[1m]))",
+            "legendFormat": "failed/min"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 4,
+        "title": "Tasks Failed per Minute",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(ffmpeg_tasks_total{status='failed'}[1m]))",
+            "legendFormat": "{{value}}"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 }
+      },
+      {
+        "id": 5,
+        "title": "Active Workers",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "active_workers",
+            "legendFormat": "{{value}}"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 16 }
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+# Testing framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0
+
+# Async HTTP client
+httpx==0.25.2
+
+# Coverage reporting
+coverage==7.3.0
+
+# Async support
+anyio==3.7.1
+
+# Load testing
+locust==2.17.0
+
+# OpenCV for creating test videos
+opencv-python==4.8.1.78
+
+# Additional testing utilities
+pytest-timeout==2.2.0
+pytest-html==3.2.0
+pytest-emoji==0.2.0
+
+# Code quality
+black==23.12.0
+isort==5.13.2
+flake8==6.1.0
+mypy==1.7.1
