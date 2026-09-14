@@ -1,228 +1,64 @@
-# FFmpeg API Service
+# FFmpeg API
 
-REST API сервис для асинхронной обработки видео файлов с использованием FFmpeg.
+**Сервис, который принимает видео по сети и возвращает обработанное: склеивает, меняет звук, накладывает текст и субтитры. Тяжёлая работа уходит в очередь, клиент не ждёт на линии.**
 
-## Возможности
+[![Python](https://img.shields.io/badge/Python-3.11+-0573B8?style=flat-square&labelColor=0C0F13)](https://www.python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-REST-0573B8?style=flat-square&labelColor=0C0F13)](https://fastapi.tiangolo.com)
+[![Celery](https://img.shields.io/badge/Celery-очереди-0573B8?style=flat-square&labelColor=0C0F13)](https://docs.celeryq.dev)
+[![Docker](https://img.shields.io/badge/Docker-Compose-0573B8?style=flat-square&labelColor=0C0F13)](https://docs.docker.com/compose/)
+[![Автор](https://img.shields.io/badge/Автор-PROMAREN-E8A33B?style=flat-square&labelColor=0C0F13)](https://promaren.ru)
 
-- 🎬 **Объединение видео** - склеивание нескольких видео файлов в один
-- 🎵 **Наложение аудио** - замена или микс аудио дорожки с синхронизацией по времени
-- ✏️ **Наложение текста** - добавление текста на видео с полной кастомизацией
-- 📝 **Субтитры** - генерация и наложение субтитров (SRT, VTT, ASS/SSA)
-- 🖼️ **Picture-in-Picture** - наложение видео поверх видео
-- 🔄 **Комбинированные операции** - одновременное применение нескольких эффектов
-- ⚡ **Асинхронная обработка** - очереди задач с приоритетами
-- 📊 **Мониторинг** - метрики, логирование, дашборды
-- 🚀 **Масштабируемость** - горизонтальное масштабирование
-- 🔐 **Аутентификация** - JWT токены и API ключи
+---
 
-## Технологический стек
+## Что это
 
-- **Backend**: Python 3.11+, FastAPI
-- **Task Queue**: Redis + Celery
-- **Database**: PostgreSQL 15+
-- **Storage**: MinIO (S3-compatible)
-- **Video Processing**: FFmpeg 4.4+
-- **Monitoring**: Prometheus + Grafana
-- **Containerization**: Docker + Docker Compose
+Обёртка над FFmpeg с человеческим интерфейсом. Вместо того чтобы держать монтажёра у консоли, сервис принимает запрос, ставит задачу в очередь и отдаёт её номер. Готовый файл забирают по этому номеру, а о ходе работы можно спросить в любой момент.
 
-## Быстрый старт
+Нужен там, где видео обрабатывается потоком и по одному правилу: карточки товаров, ролики для каналов, нарезка вебинаров, подстановка субтитров.
 
-### Требования
+## Что умеет
 
-- Docker 20.10+
-- Docker Compose 2.0+
-- 8GB+ RAM
-- 20GB+ свободного диска
+- **Склеивать видео** — несколько файлов в один.
+- **Работать со звуком** — заменить дорожку или подмешать вторую с привязкой ко времени.
+- **Накладывать текст** — шрифт, размер, цвет, положение, время появления.
+- **Ставить субтитры** — SRT, VTT, ASS и SSA.
+- **Класть видео поверх видео** — картинка в картинке.
+- **Делать несколько операций разом** — одним заданием, а не цепочкой запросов.
 
-### Установка
+Задачи идут с приоритетами, тяжёлые не блокируют лёгкие, воркеры добавляются горизонтально.
 
-1. Клонируйте репозиторий:
+## Как запустить
+
 ```bash
-git clone <repository-url>
-cd ffmpeg-api
-```
-
-2. Скопируйте и отредактируйте .env файл:
-```bash
-cp .env.example .env
-nano .env
-```
-
-3. Запустите сервисы:
-```bash
-docker-compose up -d
-```
-
-4. Инициализируйте базу данных:
-```bash
-docker-compose exec api python scripts/init_db.py
-```
-
-5. Создайте admin пользователя:
-```bash
-docker-compose exec api python scripts/create_admin.py
-```
-
-6. Проверьте работоспособность:
-```bash
+cp .env.example .env            # пароли и ключи задаются здесь
+docker compose up -d
+docker compose exec api python scripts/init_db.py
+docker compose exec api python scripts/create_admin.py
 curl http://localhost:8000/api/v1/health
 ```
 
-## Использование API
+Нужны Docker 20.10 и выше, 8 ГБ памяти и 20 ГБ на диске: видео весит.
 
-### Пример: Наложение текста на видео
+Описание методов открывается на `http://localhost:8000/docs` — FastAPI собирает его из самого кода, поэтому оно не расходится с тем, что сервис делает на самом деле.
 
-```bash
-# 1. Загрузка файла
-curl -X POST http://localhost:8000/api/v1/files/upload \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "file=@video.mp4"
+## Как устроено
 
-# Получите file_id из ответа
+| Слой | Чем сделан | Зачем |
+| -- | -- | -- |
+| Приём запросов | FastAPI | описание методов собирается само |
+| Очередь | Celery поверх Redis | долгая работа уходит из запроса |
+| Хранилище файлов | MinIO, совместимый с S3 | видео не лежит на диске приложения |
+| База | PostgreSQL | задачи, пользователи, история |
+| Обработка | FFmpeg 4.4 и выше | сама работа с видео |
+| Наблюдение | Prometheus и Grafana | видно очередь, время задач и отказы |
+| Доступ | JWT и ключи API | сервис закрыт от посторонних |
 
-# 2. Создание задачи
-curl -X POST http://localhost:8000/api/v1/tasks/text-overlay \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "video": {"source": "file_upload", "file_id": "YOUR_FILE_ID"},
-    "output_config": {
-      "format": "mp4",
-      "video_codec": "libx264",
-      "audio_codec": "aac"
-    },
-    "text_overlays": [
-      {
-        "text": "Hello World",
-        "start_time": 0,
-        "end_time": 5,
-        "position": {"x": 50, "y": 50, "anchor": "top_left"},
-        "font": {"name": "Arial", "size": 48, "color": "#FFFFFF"}
-      }
-    ]
-  }'
+Код разложен по назначению: `app/api` — методы, `app/processors` — операции над видео, `app/queue` — задачи, `app/storage` — файлы, `app/monitoring` — метрики.
 
-# Получите task_id из ответа
+## Состояние
 
-# 3. Проверка статуса
-curl http://localhost:8000/api/v1/tasks/YOUR_TASK_ID \
-  -H "Authorization: Bearer YOUR_TOKEN"
+Рабочий сервис с тестами и разбором реализации в `docs/`. Последняя правка — май 2026 года.
 
-# 4. Скачивание результата (когда status="completed")
-curl http://localhost:8000/api/v1/files/OUTPUT_FILE_ID/download \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -o output.mp4
-```
+---
 
-## Документация
-
-- [Архитектура](docs/ARCHITECTURE.md) - детальное описание архитектуры
-- [API Документация](docs/API.md) - полное описание API endpoints
-- [Deployment Guide](docs/DEPLOYMENT.md) - руководство по развертыванию
-
-## Доступные сервисы
-
-| Сервис | URL | Назначение |
-|--------|-----|------------|
-| API | http://localhost:8000 | REST API |
-| Grafana | http://localhost:3000 | Дашборды мониторинга |
-| Prometheus | http://localhost:9090 | Метрики |
-| Flower | http://localhost:5555 | Мониторинг Celery |
-| MinIO Console | http://localhost:9001 | Управление хранилищем |
-
-## Структура проекта
-
-```
-ffmpeg-api/
-├── app/                      # Основное приложение
-│   ├── api/                  # API endpoints
-│   ├── models/               # SQLAlchemy модели
-│   ├── schemas/              # Pydantic схемы
-│   ├── services/             # Бизнес-логика
-│   ├── processors/           # FFmpeg процессоры
-│   ├── database/             # Database layer
-│   ├── storage/              # MinIO интеграция
-│   ├── queue/                # Celery задачи
-│   ├── middleware/           # Custom middleware
-│   ├── utils/                # Утилиты
-│   └── monitoring/           # Логирование и метрики
-├── docker/                   # Docker конфигурации
-├── tests/                    # Тесты
-├── scripts/                  # Скрипты (backup, init)
-├── docs/                     # Документация
-├── docker-compose.yml        # Development compose
-└── docker-compose.prod.yml   # Production compose
-```
-
-## Production развертывание
-
-Подробная информация в [Deployment Guide](docs/DEPLOYMENT.md)
-
-Краткий обзор:
-
-1. Настройте SSL сертификаты (Let's Encrypt)
-2. Настройте .env.production
-3. Запустите с production compose файлом:
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-## Масштабирование
-
-### API Servers
-```bash
-docker-compose up -d --scale api=5
-```
-
-### Workers
-```bash
-docker-compose up -d --scale worker=10
-```
-
-## Мониторинг
-
-Доступны следующие метрики:
-
-- Время обработки задач
-- Размер входных/выходных файлов
-- Процент успешных операций
-- Размер очереди задач
-- CPU/Memory использование
-
-Просмотр через Grafana на http://localhost:3000
-
-## Поддерживаемые форматы
-
-### Входные форматы
-- Видео: MP4, AVI, MOV, MKV, WMV
-- Аудио: MP3, AAC, WAV, FLAC, OGG
-- Субтитры: SRT, VTT, ASS, SSA
-
-### Выходные форматы
-- Видео: MP4, AVI, MOV, MKV, WebM
-- Аудио: AAC, MP3, FLAC, Opus
-- Кодеки: H.264, H.265/HEVC, VP8, VP9
-
-## Безопасность
-
-- JWT токены для аутентификации
-- Rate limiting
-- Валидация всех входных данных
-- Изолированные Docker контейнеры
-- HTTPS/TLS шифрование (production)
-
-## Contributing
-
-1. Fork репозитория
-2. Создайте feature ветку (`git checkout -b feature/AmazingFeature`)
-3. Commit изменения (`git commit -m 'Add some AmazingFeature'`)
-4. Push в ветку (`git push origin feature/AmazingFeature`)
-5. Откройте Pull Request
-
-## License
-
-MIT License
-
-## Контакты
-
-Для вопросов и поддержки создайте issue в репозитории.
+Сделано в [PROMAREN](https://promaren.ru). Интеграции и сервисы, которые снимают ручную работу: [promaren.ru/products](https://promaren.ru/products/).
