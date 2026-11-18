@@ -6,7 +6,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-REST-0573B8?style=flat-square&labelColor=0C0F13)](https://fastapi.tiangolo.com)
 [![Celery](https://img.shields.io/badge/Celery-очереди-0573B8?style=flat-square&labelColor=0C0F13)](https://docs.celeryq.dev)
 [![Docker](https://img.shields.io/badge/Docker-Compose-0573B8?style=flat-square&labelColor=0C0F13)](https://docs.docker.com/compose/)
-[![Автор](https://img.shields.io/badge/Автор-PROMAREN-E8A33B?style=flat-square&labelColor=0C0F13)](https://promaren.ru)
+[![Автор](https://img.shields.io/badge/Автор-Марина_Погодина-1A1917?style=flat-square)](https://github.com/unnamed00bas)
 
 ---
 
@@ -61,4 +61,4 @@ curl http://localhost:8000/api/v1/health
 
 ---
 
-Сделано в [PROMAREN](https://promaren.ru). Интеграции и сервисы, которые снимают ручную работу: [promaren.ru/products](https://promaren.ru/products/).
+Автор: [Марина Погодина](https://github.com/unnamed00bas).

@@ -62,7 +62,7 @@ fi
 # 5. Создаём SSL конфигурацию nginx
 echo "[5/5] Настройка nginx с SSL..."
 mkdir -p ./docker/nginx/ssl-enabled
-sed "s/ffmpeg.promaren.ru/$DOMAIN/g" ./docker/nginx/conf.d/ssl.conf.template > ./docker/nginx/ssl-enabled/ssl.conf
+sed "s/__DOMAIN__/$DOMAIN/g" ./docker/nginx/conf.d/ssl.conf.template > ./docker/nginx/ssl-enabled/ssl.conf
 
 # Перезапускаем nginx с SSL
 docker-compose restart nginx

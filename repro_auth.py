@@ -1,10 +1,11 @@
 
+import os
 import requests
 import random
 import string
 import sys
 
-BASE_URL = "https://ffmpeg.promaren.ru/api/v1"
+BASE_URL = os.environ.get("FFMPEG_API_BASE_URL", "http://localhost:8000/api/v1")
 
 def generate_username():
     return "testuser_" + ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
